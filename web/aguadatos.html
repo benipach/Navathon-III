@@ -1,0 +1,202 @@
+<!-- Falta modificar cuand este la base de datos-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grupo 4: Administración Inteligente de Agua</title>
+
+<link rel="stylesheet" href="styles.css">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="dashboard-wrapper">
+
+<header class="header-panel">
+<div class="header-info">
+<h1>Grupo 4 <span>| Caso Copahue - Administración de Agua</span></h1>
+<p>Monitoreo en tiempo real de reservas hídricas, tanques y distribución.</p>
+</div>
+<div class="header-badges">
+<span id="badge-modo" class="badge badge-sky">Modo: Automático</span>
+<span class="badge badge-online">
+<span class="pulse-dot"></span> Sistema Online
+</span>
+</div>
+</header>
+
+<section class="kpi-grid">
+  
+<div class="card">
+<p class="kpi-title">Nivel de Reserva</p>
+<p id="kpi-nivel" class="kpi-value text-sky">82.5%</p>
+<p class="kpi-subtitle">Tanque Principal (4,12 m)</p>
+</div>
+<div class="card">
+<p class="kpi-title">Caudal de Salida</p>
+<p id="kpi-caudal" class="kpi-value text-emerald">45,2 L/s</p>
+<p class="kpi-subtitle">Red de distribución activa</p>
+</div>
+
+<div class="card">
+<p class="kpi-title">Válvula Principal</p>
+<p id="kpi-valvula" class="kpi-value text-emerald">ABIERTA</p>
+<p class="kpi-subtitle">Control remoto operativo</p>
+</div>
+</section>
+
+<section class="main-grid">
+<div class="card tank-section">
+<div class="section-header">
+<h3>Estado del Tanque</h3>
+<p>Nivel físico estimado en tiempo real.</p>
+</div>
+<div class="tank-container">
+<div id="tank-water" class="tank-water" style="height: 82.5%;">
+<div class="tank-wave"></div>
+</div>
+<div class="tank-markers">
+<span style="bottom: 80%;">80%</span>
+<span style="bottom: 60%;">60%</span>
+<span style="bottom: 40%;">40%</span>
+<span style="bottom: 20%;">20%</span>
+</div>
+</div>
+<span id="tank-status-label" class="badge badge-sky mt-3">Nivel Óptimo</span>
+</div>
+
+<div class="card chart-section">
+<div class="chart-header">
+<h3>Evolución Histórica de Niveles</h3>
+<span class="text-muted">Actualización en vivo</span>
+</div>
+<div class="chart-container">
+<canvas id="graficoNivel"></canvas>
+</div>
+</div>
+
+<div class="card control-section">
+<div class = "card">
+<h3>Actuadores</h3>
+<p class="section-desc">Control de infraestructura física.</p>
+<div class="button-group">
+<button onclick="controlarValvula('ABIERTA')" class="btn btn-open">
+ Abrir Válvula
+</button>
+<button onclick="controlarValvula('CERRADA')" class="btn btn-close">
+ Cerrar Válvula
+</button>
+</div>
+</div>
+<div class="control-footer">
+<span>API Grupo 5 (Alertas):</span>
+<span class="text-emerald font-bold">Activo</span>
+</div>
+</div>
+</section>
+
+<section class="card log-section">
+<div class="log-header">
+<h3> Registro de Eventos y Persistencia</h3>
+<span class="text-muted">Últimos registros en tiempo real</span>
+</div>
+<div id="log-container" class="log-console">
+
+</div>
+</section>
+</div>
+
+<script>
+const ctx = document.getElementById('graficoNivel').getContext('2d');
+const graficoNivel = new Chart(ctx, {
+type: 'line',
+data: {
+labels: [],
+datasets: [{
+label: 'Nivel (%)',
+data: [],
+borderColor: '#38bdf8',
+backgroundColor: 'rgba(56, 189, 248, 0.08)',
+borderWidth: 2,
+fill: true,
+tension: 0.4
+}]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+plugins: { legend: { display: false } },
+scales: {
+y: { min: 0, max: 100, grid: { color: '#1e293b' }, ticks: { color: '#64748b' } },
+x: { grid: { display: false }, ticks: { color: '#64748b' } }
+}
+}
+});
+
+let estadoValvula = "ABIERTA";
+let nivelActual = 82.5;
+
+function calcularEstado(nivel) {
+if (nivel >= 80) return "normal";
+if (nivel >= 60) return "low";
+if (nivel >= 40) return "medium";
+if (nivel >= 20) return "high";
+return "critical";
+}
+
+function controlarValvula(nuevoEstado) {
+estadoValvula = nuevoEstado;
+const elem = document.getElementById('kpi-valvula');
+elem.innerText = estadoValvula;
+elem.className = estadoValvula === "ABIERTA" 
+? "kpi-value text-emerald" 
+: "kpi-value text-rose";
+agregarLog(`[ACTUADOR] Válvula principal cambiada a estado: ${nuevoEstado}`);
+}
+
+function agregarLog(mensaje) {
+const logContainer = document.getElementById('log-container');
+const hora = new Date().toLocaleTimeString();
+const nuevoLog = document.createElement('div');
+nuevoLog.innerHTML = `<span class="log-time">[${hora}]</span> ${mensaje}`;
+logContainer.prepend(nuevoLog);
+}
+
+function actualizarSimulacion() {
+const horaActual = new Date().toLocaleTimeString();
+
+if (estadoValvula === "ABIERTA") {
+nivelActual = Math.max(0, nivelActual - 10);
+}
+
+const nivelRedondeado = nivelActual.toFixed(1);
+const caudalAleatorio = (estadoValvula === "ABIERTA") ? (42 + Math.random() * 6).toFixed(1) : (0.0).toFixed(1);
+
+document.getElementById('kpi-nivel').innerText = nivelRedondeado + '%';
+document.getElementById('kpi-caudal').innerText = caudalAleatorio + ' L/s';
+
+const estadoActual = calcularEstado(Number(nivelRedondeado));
+const statusLabel = document.getElementById('tank-status-label');
+if (statusLabel) {
+statusLabel.innerText = `Estado: ${estadoActual}`;
+}
+
+const tankWater = document.getElementById('tank-water');
+tankWater.style.height = nivelRedondeado + '%';
+
+if (graficoNivel.data.labels.length > 10) {
+graficoNivel.data.labels.shift();
+graficoNivel.data.datasets[0].data.shift();
+}
+graficoNivel.data.labels.push(horaActual);
+graficoNivel.data.datasets[0].data.push(nivelRedondeado);
+graficoNivel.update();
+}
+
+setInterval(actualizarSimulacion, 3000);
+actualizarSimulacion();
+</script>
+</body>
+</html>
