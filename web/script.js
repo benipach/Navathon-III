@@ -6,8 +6,8 @@ labels: [],
 datasets: [{
 label: 'Nivel (%)',
 data: [],
-borderColor: '#38bdf8',
-backgroundColor: 'rgba(56, 189, 248, 0.08)',
+borderColor: '#ff4d1a',
+backgroundColor: 'rgba(250, 31, 58, 0.14)',
 borderWidth: 2,
 fill: true,
 tension: 0.4
@@ -18,8 +18,8 @@ responsive: true,
 maintainAspectRatio: false,
 plugins: { legend: { display: false } },
 scales: {
-y: { min: 0, max: 100, grid: { color: '#1e293b' }, ticks: { color: '#64748b' } },
-x: { grid: { display: false }, ticks: { color: '#64748b' } }
+y: { min: 0, max: 100, grid: { color: '#3d1a24' }, ticks: { color: '#b9a0a6' } },
+x: { grid: { display: false }, ticks: { color: '#b9a0a6' } }
 }
 }
 });
@@ -40,8 +40,8 @@ estadoValvula = nuevoEstado;
 const elem = document.getElementById('kpi-valvula');
 elem.innerText = estadoValvula;
 elem.className = estadoValvula === "ABIERTA" 
-? "kpi-value text-emerald" 
-: "kpi-value text-rose";
+? "kpi-value text-ok" 
+: "kpi-value text-alert";
 agregarLog(`[ACTUADOR] Válvula principal cambiada a estado: ${nuevoEstado}`);
 }
 
