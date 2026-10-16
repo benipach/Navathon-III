@@ -35,11 +35,11 @@ let estadoPrevio = null;
 
 // Estados del tanque: texto, color del texto y estilo de la etiqueta
 function calcularEstado(nivel) {
-  if (nivel >= 90) return { texto: "Nivel muy alto", badge: "badge-alert", color: "text-alert", critico: true };
-  if (nivel >= 60) return { texto: "Nivel óptimo",   badge: "badge-optimo", color: "text-water", critico: false };
-  if (nivel >= 30) return { texto: "Nivel medio",    badge: "badge-warn",   color: "text-warn",  critico: false };
-  if (nivel >= 15) return { texto: "Nivel bajo",     badge: "badge-warn",   color: "text-warn",  critico: false };
-  return { texto: "Nivel crítico", badge: "badge-alert", color: "text-alert", critico: true };
+  if (nivel >= 80) return { texto: "normal", badge: "badge-alert", color: "text-alert", critico: false };
+  if (nivel >= 60) return { texto: "low",   badge: "badge-optimo", color: "text-water", critico: false };
+  if (nivel >= 40) return { texto: "medium",    badge: "badge-warn",   color: "text-warn",  critico: false };
+  if (nivel >= 20) return { texto: "high",     badge: "badge-warn",   color: "text-warn",  critico: false };
+  return { texto: "critical", badge: "badge-alert", color: "text-alert", critico: true };
 }
 
 // Ventana emergente de nivel crítico
@@ -112,8 +112,8 @@ function actualizarSimulacion() {
   const horaActual = new Date().toLocaleTimeString();
 
   // Aporte constante de agua y consumo solo si la válvula está abierta
-  const aporte = 2 + Math.random() * 0.3;
-  const consumo = (estadoValvula === "ABIERTA") ? 9 + Math.random() * 0.6 : 0;
+  const aporte = 5 + Math.random() * 0.3;
+  const consumo = (estadoValvula === "ABIERTA") ? 15 + Math.random() * 0.6 : 0;
   nivelActual = Math.min(100, Math.max(0, nivelActual + aporte - consumo));
   caudalActual = (estadoValvula === "ABIERTA") ? 42 + Math.random() * 6 : 0;
 
