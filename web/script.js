@@ -35,7 +35,7 @@ let estadoPrevio = null;
 
 // Estados del tanque: texto, color del texto y estilo de la etiqueta
 function calcularEstado(nivel) {
-  if (nivel >= 80) return { texto: "normal", badge: "badge-alert", color: "text-alert", critico: false };
+  if (nivel >= 80) return { texto: "normal", badge: "badge-optimo", color: "text-water", critico: false };
   if (nivel >= 60) return { texto: "low",   badge: "badge-optimo", color: "text-water", critico: false };
   if (nivel >= 40) return { texto: "medium",    badge: "badge-warn",   color: "text-warn",  critico: false };
   if (nivel >= 20) return { texto: "high",     badge: "badge-warn",   color: "text-warn",  critico: false };
@@ -50,7 +50,7 @@ function mostrarAlertaCritica(estado) {
   document.getElementById('alerta-titulo').innerText = `⚠ ${estado.texto}`;
   document.getElementById('alerta-dato').innerText = nivelActual.toFixed(1) + '%';
   document.getElementById('alerta-mensaje').innerText =
-    (nivelActual >= 50 ? 'El tanque está casi lleno' : 'El tanque está casi vacío') + ` (${altura} m).`;
+    `El tanque está casi vacío (${altura} m).`;
   alertaModal.hidden = false;
   document.getElementById('alerta-cerrar').focus();
 }
