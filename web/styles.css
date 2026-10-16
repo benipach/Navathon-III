@@ -237,7 +237,7 @@ body {
 
 .tank-water {
   width: 100%;
-  background: linear-gradient(to top, #0369a1, #38bdf8);
+  background: linear-gradient(to top, #175170, #1758a1, #07b1fa, #38bdf8);
   transition: height 0.5s ease;
   position: relative;
 }
@@ -403,7 +403,7 @@ img {
 @media (prefers-reduced-motion: reduce) { .pulse-dot, .tank-wave { animation: none; } }
 
 /* Estados del tanque y del nivel */
-.badge-optimo { background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+.badge-optimo { background: rgba(56, 189, 248, 0.12); color: #07b1fa; border: 1px solid rgba(56, 189, 248, 0.3); }
 .badge-warn   { background: rgba(255, 176, 32, 0.12); color: var(--brand-amber); border: 1px solid rgba(255, 176, 32, 0.3); }
 .badge-alert  { background: rgba(255, 10, 127, 0.14); color: var(--brand-magenta); border: 1px solid rgba(255, 10, 127, 0.4); }
 .text-water { color: #38bdf8; }
