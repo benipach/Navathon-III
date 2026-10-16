@@ -237,7 +237,7 @@ body {
 
 .tank-water {
   width: 100%;
-  background: linear-gradient(to top, #3b4db3, #2058d1, #73d4f1);
+  background: linear-gradient(to top, #0369a1, #38bdf8);
   transition: height 0.5s ease;
   position: relative;
 }
@@ -411,3 +411,59 @@ img {
 /* Registro de eventos por tipo */
 .log-alert { color: var(--brand-magenta); font-weight: 600; }
 .log-actuador { color: var(--brand-amber); }
+
+/* Ventana de alerta crítica */
+.alerta-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 3, 6, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 100;
+}
+.alerta-overlay[hidden] { display: none; }
+
+.alerta-box {
+  background-color: var(--bg-card);
+  border: 1px solid var(--brand-magenta);
+  border-top: 4px solid var(--brand-magenta);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 340px;
+  text-align: center;
+  box-shadow: 0 0 40px rgba(255, 10, 127, 0.35);
+  animation: alerta-entrada 0.2s ease-out;
+}
+.alerta-titulo {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand-magenta);
+}
+.alerta-dato {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-top: 0.5rem;
+  color: var(--text-main);
+}
+.alerta-mensaje {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0.5rem 0 1.25rem;
+}
+.btn-alerta {
+  background-color: rgba(255, 10, 127, 0.14);
+  color: var(--text-main);
+  border-color: rgba(255, 10, 127, 0.5);
+}
+.btn-alerta:hover { background-color: rgba(255, 10, 127, 0.28); }
+
+@keyframes alerta-entrada {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) { .alerta-box { animation: none; } }
