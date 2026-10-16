@@ -35,11 +35,11 @@ let estadoPrevio = null;
 
 // Estados del tanque: texto, color del texto y estilo de la etiqueta
 function calcularEstado(nivel) {
-  if (nivel >= 80) return { texto: "normal", badge: "badge-optimo", color: "text-water", critico: false };
-  if (nivel >= 60) return { texto: "low",   badge: "badge-optimo", color: "text-water", critico: false };
-  if (nivel >= 40) return { texto: "medium",    badge: "badge-warn",   color: "text-warn",  critico: false };
-  if (nivel >= 20) return { texto: "high",     badge: "badge-warn",   color: "text-warn",  critico: false };
-  return { texto: "critical", badge: "badge-alert", color: "text-alert", critico: true };
+  if (nivel >= 80) return { texto: "Normal", badge: "badge-optimo", color: "text-water", critico: false };
+  if (nivel >= 60) return { texto: "Low",   badge: "badge-optimo", color: "text-water", critico: false };
+  if (nivel >= 40) return { texto: "Medium",    badge: "badge-warn",   color: "text-warn",  critico: false };
+  if (nivel >= 20) return { texto: "High",     badge: "badge-warn",   color: "text-warn",  critico: false };
+  return { texto: "CRITICAL", badge: "badge-alert", color: "text-alert", critico: true };
 }
 
 // Ventana emergente de nivel crítico
