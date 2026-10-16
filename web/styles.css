@@ -386,3 +386,13 @@ body {
 .log-time { color: #475569; }
 .log-sys { color: var(--accent-sky); }
 .log-telemetry { color: var(--accent-emerald); }
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.logo {
+  width: 150px;
+  border-radius: 10px;
+}
