@@ -42,6 +42,23 @@ function calcularEstado(nivel) {
   return { texto: "Nivel crítico", badge: "badge-alert", color: "text-alert", critico: true };
 }
 
+// Ventana emergente de nivel crítico
+const alertaModal = document.getElementById('alerta-modal');
+
+function mostrarAlertaCritica(estado) {
+  const altura = (nivelActual / 100 * ALTURA_TANQUE_M).toFixed(2).replace('.', ',');
+  document.getElementById('alerta-titulo').innerText = `⚠ ${estado.texto}`;
+  document.getElementById('alerta-dato').innerText = nivelActual.toFixed(1) + '%';
+  document.getElementById('alerta-mensaje').innerText =
+    (nivelActual >= 50 ? 'El tanque está casi lleno' : 'El tanque está casi vacío') + ` (${altura} m).`;
+  alertaModal.hidden = false;
+  document.getElementById('alerta-cerrar').focus();
+}
+
+function cerrarAlertaCritica() { alertaModal.hidden = true; }
+document.getElementById('alerta-cerrar').addEventListener('click', cerrarAlertaCritica);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarAlertaCritica(); });
+
 function agregarLog(mensaje, tipo = "sys") {
   const logContainer = document.getElementById('log-container');
   const hora = new Date().toLocaleTimeString();
@@ -67,7 +84,8 @@ function refrescarPantalla() {
     `Tanque Principal (${(nivelActual / 100 * ALTURA_TANQUE_M).toFixed(2).replace('.', ',')} m)`;
 
   document.getElementById('kpi-caudal').innerText = caudalActual.toFixed(1) + ' L/s';
-  document.getElementById('kpi-caudal-sub').innerText = abierta ? 'Red de distribución activa' : 'Distribución interrumpida';
+  document.getElementById('kpi-caudal-sub').innerText =
+    abierta ? 'Red de distribución activa' : 'Distribución interrumpida';
 
   const kpiValvula = document.getElementById('kpi-valvula');
   kpiValvula.innerText = estadoValvula;
@@ -94,8 +112,8 @@ function actualizarSimulacion() {
   const horaActual = new Date().toLocaleTimeString();
 
   // Aporte constante de agua y consumo solo si la válvula está abierta
-  const aporte = 2.5 + Math.random() * 0.3;
-  const consumo = (estadoValvula === "ABIERTA") ? 10 + Math.random() * 0.6 : 0;
+  const aporte = 2 + Math.random() * 0.3;
+  const consumo = (estadoValvula === "ABIERTA") ? 9 + Math.random() * 0.6 : 0;
   nivelActual = Math.min(100, Math.max(0, nivelActual + aporte - consumo));
   caudalActual = (estadoValvula === "ABIERTA") ? 42 + Math.random() * 6 : 0;
 
@@ -106,6 +124,7 @@ function actualizarSimulacion() {
   if (estado.texto !== estadoPrevio) {
     agregarLog(`[TELEMETRÍA] ${estado.texto} (${nivelActual.toFixed(1)}%)`, estado.critico ? "alert" : "telemetry");
     estadoPrevio = estado.texto;
+    if (estado.critico) mostrarAlertaCritica(estado);
   }
 
   if (graficoNivel.data.labels.length > 10) {
