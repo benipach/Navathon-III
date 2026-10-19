@@ -160,7 +160,7 @@ void loop() {
   jsonPayload += "\"timestamp\":\"2026-10-19T10:30:00-03:00\",";
   jsonPayload += "\"status\":\"active\",";
   jsonPayload += "\"alert_level\":\"" + alertLevel + "\",";
-  jsonPayload += "\"data\":{\"water_level\":" + String(porcentajeAgua) + "},";
+  jsonPayload += "\"data\":{\"water_level\":" + String(nivelAgua) + "},";
   jsonPayload += "\"metadata\":{\"environment\":\"test\",\"source_type\":\"real\",\"alert_evaluated\":true,\"units\":{\"water_level\":\"level\"},\"quality\":{\"water_level\":\"valid\"}}";
   jsonPayload += "}";
 
