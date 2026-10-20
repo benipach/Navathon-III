@@ -1,10 +1,11 @@
 const ALTURA_TANQUE_M = 5;      // altura total del tanque en metros
 const MAX_LOGS = 50;             // máximo de registros visibles
+const INTERVALO_MS = 3000;
 
-// Configuración de la API y WebSockets
-const API_HOST = window.location.host || 'localhost:8000';
-const HTTP_PROTOCOL = window.location.protocol === 'https:' ? 'https:' : 'http:';
-const WS_PROTOCOL = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+// Respeta la preferencia del sistema de reducir movimiento (WCAG 2.2.2)
+if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  Chart.defaults.animation = false;
+}
 
 const ctx = document.getElementById('graficoNivel').getContext('2d');
 const graficoNivel = new Chart(ctx, {
@@ -33,18 +34,63 @@ const graficoNivel = new Chart(ctx, {
 });
 
 let estadoValvula = "ABIERTA";
-let nivelActual = 0.0;    // Arranca en 0 esperando datos reales
-let caudalActual = 0.0;
+let nivelActual = 82.5;
+let caudalActual = 45.2;
 let estadoPrevio = null;
+let intervaloId = null;
+let pausado = false;
+
+const app = document.getElementById('app');
+const fmt = n => n.toFixed(1).replace('.', ',');
+// Los nombres de estado están en inglés: se marcan con lang="en" (WCAG 3.1.2)
+const en = texto => `<span lang="en">${texto}</span>`;
+
+// Evita reescribir el mismo texto en regiones "live" (no re-anuncia sin cambios)
+function setTexto(el, texto) {
+  if (el.textContent !== texto) el.textContent = texto;
+}
 
 // Estados del tanque: texto, color del texto y estilo de la etiqueta
 function calcularEstado(nivel) {
-  if (nivel >= 90) return { texto: "Nivel muy alto", badge: "badge-alert", color: "text-alert", critico: true };
-  if (nivel >= 60) return { texto: "Nivel óptimo",   badge: "badge-optimo", color: "text-water", critico: false };
-  if (nivel >= 30) return { texto: "Nivel medio",    badge: "badge-warn",   color: "text-warn",  critico: false };
-  if (nivel >= 15) return { texto: "Nivel bajo",     badge: "badge-warn",   color: "text-warn",  critico: false };
-  return { texto: "Nivel crítico", badge: "badge-alert", color: "text-alert", critico: true };
+  if (nivel >= 80) return { texto: "Normal", badge: "badge-optimo", color: "text-water", critico: false };
+  if (nivel >= 60) return { texto: "Low",   badge: "badge-optimo", color: "text-water", critico: false };
+  if (nivel >= 40) return { texto: "Medium",    badge: "badge-warn",   color: "text-warn",  critico: false };
+  if (nivel >= 20) return { texto: "High",     badge: "badge-warn",   color: "text-warn",  critico: false };
+  return { texto: "CRITICAL", badge: "badge-alert", color: "text-alert", critico: true };
 }
+
+// Ventana emergente de nivel crítico
+const alertaModal = document.getElementById('alerta-modal');
+const botonCerrarAlerta = document.getElementById('alerta-cerrar');
+let focoPrevio = null;
+
+function mostrarAlertaCritica(estado) {
+  const alturaM = (nivelActual / 100 * ALTURA_TANQUE_M).toFixed(2).replace('.', ',');
+  focoPrevio = document.activeElement;
+  document.getElementById('alerta-titulo').innerHTML =
+    `<span aria-hidden="true">⚠</span> ${en(estado.texto)}`;
+  document.getElementById('alerta-dato').innerText = nivelActual.toFixed(1) + '%';
+  document.getElementById('alerta-mensaje').innerText =
+    `El tanque está casi vacío (${alturaM} m).`;
+  app.inert = true;                 // el fondo no recibe foco mientras el diálogo está abierto
+  alertaModal.hidden = false;
+  botonCerrarAlerta.focus();
+}
+
+function cerrarAlertaCritica() {
+  if (alertaModal.hidden) return;
+  alertaModal.hidden = true;
+  app.inert = false;
+  if (focoPrevio && typeof focoPrevio.focus === 'function') focoPrevio.focus(); // WCAG 2.4.3
+}
+
+botonCerrarAlerta.addEventListener('click', cerrarAlertaCritica);
+document.addEventListener('keydown', e => {
+  if (alertaModal.hidden) return;
+  if (e.key === 'Escape') cerrarAlertaCritica();
+  // Mantiene el foco dentro del diálogo (hay un único elemento enfocable)
+  if (e.key === 'Tab') { e.preventDefault(); botonCerrarAlerta.focus(); }
+});
 
 function agregarLog(mensaje, tipo = "sys") {
   const logContainer = document.getElementById('log-container');
@@ -58,23 +104,21 @@ function agregarLog(mensaje, tipo = "sys") {
   }
 }
 
-// Pinta en pantalla los valores actuales
-function refrescarPantalla(caudalParam = null) {
-  if (caudalParam !== null) caudalActual = caudalParam;
-  
+// Pinta en pantalla los valores actuales (no modifica el nivel)
+function refrescarPantalla() {
   const estado = calcularEstado(nivelActual);
   const abierta = estadoValvula === "ABIERTA";
+  const alturaM = (nivelActual / 100 * ALTURA_TANQUE_M).toFixed(2).replace('.', ',');
 
   const kpiNivel = document.getElementById('kpi-nivel');
   kpiNivel.innerText = nivelActual.toFixed(1) + '%';
   kpiNivel.className = `kpi-value ${estado.color}`;
 
-  // Cálculo corregido de la altura en metros respecto al total del tanque
-  const alturaMetros = (nivelActual / 100) * ALTURA_TANQUE_M;
-  document.getElementById('kpi-altura').innerText = `Tanque Principal (${alturaMetros.toFixed(2).replace('.', ',')} m)`;
+  document.getElementById('kpi-altura').innerText = `Tanque Principal (${alturaM} m)`;
 
   document.getElementById('kpi-caudal').innerText = caudalActual.toFixed(1) + ' L/s';
-  document.getElementById('kpi-caudal-sub').innerText = abierta ? 'Red de distribución activa' : 'Distribución interrumpida';
+  document.getElementById('kpi-caudal-sub').innerText =
+    abierta ? 'Red de distribución activa' : 'Distribución interrumpida';
 
   const kpiValvula = document.getElementById('kpi-valvula');
   kpiValvula.innerText = estadoValvula;
@@ -83,108 +127,85 @@ function refrescarPantalla(caudalParam = null) {
     abierta ? 'Control remoto operativo' : 'Salida bloqueada por control remoto';
 
   const etiqueta = document.getElementById('tank-status-label');
-  etiqueta.innerText = estado.texto;
+  setTexto(etiqueta, estado.texto);
+  etiqueta.lang = 'en';
   etiqueta.className = `badge ${estado.badge} mt-3`;
 
   document.getElementById('tank-water').style.height = nivelActual.toFixed(1) + '%';
+  document.getElementById('tank').setAttribute('aria-label',
+    `Tanque principal al ${fmt(nivelActual)} % de su capacidad (${alturaM} m)`);
 }
 
-// Función central para procesar cualquier nuevo dato real recibido
-function procesarNuevoDato(nuevoNivel, nuevoCaudal = null) {
-  nivelActual = Math.min(100, Math.max(0, Number(nuevoNivel)));
-  if (nuevoCaudal !== null) caudalActual = Number(nuevoCaudal);
+// Alternativa textual del gráfico: tabla + resumen (WCAG 1.1.1)
+function actualizarAlternativaGrafico() {
+  const horas = graficoNivel.data.labels;
+  const datos = graficoNivel.data.datasets[0].data;
+  if (!datos.length) return;
+  document.getElementById('tabla-niveles').innerHTML = horas
+    .map((h, i) => `<tr><td>${h}</td><td>${fmt(datos[i])}</td></tr>`)
+    .join('');
+  document.getElementById('grafico-resumen').textContent =
+    `Gráfico de línea con las últimas ${datos.length} lecturas del nivel del tanque. ` +
+    `Última lectura: ${fmt(datos[datos.length - 1])} % a las ${horas[horas.length - 1]}. ` +
+    `Mínimo ${fmt(Math.min(...datos))} %, máximo ${fmt(Math.max(...datos))} %.`;
+}
+
+function controlarValvula(nuevoEstado) {
+  if (nuevoEstado === estadoValvula) return;
+  estadoValvula = nuevoEstado;
+  caudalActual = (estadoValvula === "ABIERTA") ? 42 + Math.random() * 6 : 0;
+  refrescarPantalla();   // se refleja al instante
+  agregarLog(`[ACTUADOR] Válvula principal cambiada a estado: ${nuevoEstado}`, "actuador");
+}
+
+function actualizarSimulacion() {
+  const horaActual = new Date().toLocaleTimeString();
+
+  // Aporte constante de agua y consumo solo si la válvula está abierta
+  const aporte = 5 + Math.random() * 0.3;
+  const consumo = (estadoValvula === "ABIERTA") ? 15 + Math.random() * 0.6 : 0;
+  nivelActual = Math.min(100, Math.max(0, nivelActual + aporte - consumo));
+  caudalActual = (estadoValvula === "ABIERTA") ? 42 + Math.random() * 6 : 0;
 
   refrescarPantalla();
 
-  const horaActual = new Date().toLocaleTimeString();
+  // Registrar solo cuando cambia el estado del tanque
   const estado = calcularEstado(nivelActual);
-  
   if (estado.texto !== estadoPrevio) {
-    agregarLog(`[TELEMETRÍA] ${estado.texto} (${nivelActual.toFixed(1)}%)`, estado.critico ? "alert" : "telemetry");
+    agregarLog(`[TELEMETRÍA] ${en(estado.texto)} (${nivelActual.toFixed(1)}%)`, estado.critico ? "alert" : "telemetry");
     estadoPrevio = estado.texto;
-  } else {
-    agregarLog(`[TELEMETRÍA] Nivel recibido: ${nivelActual.toFixed(1)}%`, "telemetry");
+    if (estado.critico) mostrarAlertaCritica(estado);
   }
 
-  // Actualizar gráfica histórica
-  if (graficoNivel.data.labels.length > 20) {
+  if (graficoNivel.data.labels.length > 10) {
     graficoNivel.data.labels.shift();
     graficoNivel.data.datasets[0].data.shift();
   }
   graficoNivel.data.labels.push(horaActual);
   graficoNivel.data.datasets[0].data.push(Number(nivelActual.toFixed(1)));
   graficoNivel.update();
+  actualizarAlternativaGrafico();
 }
 
-function controlarValvula(nuevoEstado) {
-  if (nuevoEstado === estadoValvula) return;
-  estadoValvula = nuevoEstado;
-  caudalActual = (estadoValvula === "ABIERTA") ? 42.0 : 0.0;
-  refrescarPantalla(); 
-  agregarLog(`[ACTUADOR] Válvula principal cambiada a estado: ${nuevoEstado}`, "actuador");
-}
-
-// 1. Cargar el último registro guardado en la base de datos al abrir la página
-async function cargarUltimoValorDB() {
-  try {
-    const response = await fetch(`${HTTP_PROTOCOL}//${API_HOST}/api/latest`);
-    if (response.ok) {
-      const data = await response.json();
-      if (data.valor !== undefined) {
-        procesarNuevoDato(data.valor);
-        agregarLog("[SISTEMA] Último registro sincronizado desde la base de datos.", "sys");
-      }
-    } else {
-      agregarLog("[SISTEMA] Sin datos previos. Esperando transmisión del ESP32...", "sys");
-    }
-  } catch (error) {
-    console.error("Error al consultar la API:", error);
-    agregarLog("[SISTEMA] Esperando conexión con el backend...", "alert");
+// Pausar / reanudar la actualización automática (WCAG 2.2.2)
+const botonPausa = document.getElementById('btn-pausa');
+botonPausa.addEventListener('click', () => {
+  pausado = !pausado;
+  botonPausa.setAttribute('aria-pressed', String(pausado));
+  document.body.classList.toggle('en-pausa', pausado);
+  document.getElementById('estado-vivo').textContent =
+    pausado ? 'Actualización en pausa' : 'Actualización en vivo';
+  if (pausado) {
+    clearInterval(intervaloId);
+    intervaloId = null;
+  } else {
+    actualizarSimulacion();
+    intervaloId = setInterval(actualizarSimulacion, INTERVALO_MS);
   }
-}
-
-// 2. Conexión WebSocket para escuchar al ESP32 en tiempo real
-function conectarWebSocket() {
-  const socket = new WebSocket(`${WS_PROTOCOL}//${API_HOST}/ws`);
-  const badgeEsp32 = document.getElementById('badge-esp32');
-
-  socket.onopen = () => {
-    if (badgeEsp32) {
-      badgeEsp32.textContent = "ESP32 Conectado";
-      badgeEsp32.className = "badge badge-online";
-    }
-    agregarLog("[WEBSOCKET] Canal en tiempo real activo.", "sys");
-  };
-
-  socket.onmessage = (event) => {
-    try {
-      const valor = parseFloat(event.data);
-      if (!isNaN(valor)) {
-        procesarNuevoDato(valor);
-      }
-    } catch (e) {
-      console.error("Error al procesar mensaje WS:", e);
-    }
-  };
-
-  socket.onclose = () => {
-    if (badgeEsp32) {
-      badgeEsp32.textContent = "ESP32 Desconectado";
-      badgeEsp32.className = "badge badge-desconectado";
-    }
-    agregarLog("[WEBSOCKET] Conexión perdida. Reintentando en 3s...", "alert");
-    setTimeout(conectarWebSocket, 3000);
-  };
-
-  socket.onerror = (error) => {
-    console.error("Error en WebSocket:", error);
-    socket.close();
-  };
-}
-
-// Inicialización al cargar la página
-window.addEventListener('DOMContentLoaded', () => {
-  refrescarPantalla(); // Deja todo en 0 de forma limpia al iniciar
-  cargarUltimoValorDB();
-  conectarWebSocket();
+  agregarLog(pausado
+    ? '[SISTEMA] Actualización en vivo pausada'
+    : '[SISTEMA] Actualización en vivo reanudada', "sys");
 });
+
+intervaloId = setInterval(actualizarSimulacion, INTERVALO_MS);
+actualizarSimulacion();
