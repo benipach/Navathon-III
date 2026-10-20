@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Negix - Monitoreo Copahue</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="dashboard-wrapper">
+
+    <header class="header-panel">
+        <div class="header-info">
+            <h1>NIGEX <span>| Caso Copahue - Administración de Agua</span></h1>
+            <p>Monitoreo en tiempo real de reservas hídricas, tanques y distribución.</p>
+        </div>
+        <div class="header-badges">
+            <!-- 🔌 NUEVO: Badge de Estado del ESP32 -->
+            <span id="badge-esp32" class="badge badge-desconectado">
+                <span class="pulse-dot"></span> ESP32 Desconectado
+            </span>
+            <span id="badge-modo" class="badge badge-primary">Modo: Automático</span>
+            <span class="badge badge-online">
+                <span class="pulse-dot"></span> Sistema Online
+            </span>
+        </div>
+    </header>
+
+    <section class="kpi-grid">
+        <div class="card">
+            <p class="kpi-title">Nivel de Reserva</p>
+            <p id="kpi-nivel" class="kpi-value text-primary">0.0%</p>
+            <p id="kpi-altura" class="kpi-subtitle">Tanque Principal (0.00 m)</p>
+        </div>
+        
+        <div class="card">
+            <p class="kpi-title">Caudal de Salida</p>
+            <p id="kpi-caudal" class="kpi-value text-ok">0.0 L/s</p>
+            <p id="kpi-caudal-sub" class="kpi-subtitle">Esperando datos...</p>
+        </div>
+
+        <div class="card">
+            <p class="kpi-title">Válvula Principal</p>
+            <p id="kpi-valvula" class="kpi-value text-ok">--</p>
+            <p id="kpi-valvula-sub" class="kpi-subtitle">Sin sincronizar</p>
+        </div>
+        
+        <img src="Logo.jpg" alt="Logo" class="logo">
+    </section>
+
+    <section class="main-grid">
+        <div class="card tank-section">
+            <div class="section-header">
+                <h3>Estado del Tanque</h3>
+                <p>Nivel físico estimado en tiempo real.</p>
+            </div>
+            <div class="tank-container">
+                <!-- Arranca en 0% de altura -->
+                <div id="tank-water" class="tank-water" style="height: 0%;">
+                    <div class="tank-wave"></div>
+                </div>
+                <div class="tank-markers">
+                    <span style="bottom: 80%;">80%</span>
+                    <span style="bottom: 60%;">60%</span>
+                    <span style="bottom: 40%;">40%</span>
+                    <span style="bottom: 20%;">20%</span>
+                </div>
+            </div>
+            <span id="tank-status-label" class="badge badge-optimo mt-3">Esperando datos</span>
+        </div>
+
+        <div class="card chart-section">
+            <div class="chart-header">
+                <h3>Evolución Histórica de Niveles</h3>
+                <span class="text-muted">Esperando transmisión...</span>
+            </div>
+            <div class="chart-container">
+                <canvas id="graficoNivel"></canvas>
+            </div>
+        </div>
+
+        <div class="card control-section">
+            <div class="card">
+                <h3>Actuadores</h3>
+                <p class="section-desc">Control de infraestructura física.</p>
+                <div class="button-group">
+                    <button onclick="controlarValvula('ABIERTA')" class="btn btn-open">Abrir Válvula</button>
+                    <button onclick="controlarValvula('CERRADA')" class="btn btn-close">Cerrar Válvula</button>
+                </div>
+            </div>
+            <div class="control-footer">
+                <span>API Grupo 5 (Alertas):</span>
+                <span class="text-ok font-bold">Activo</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="card log-section">
+        <div class="log-header">
+            <h3>Registro de Eventos y Persistencia</h3>
+            <span class="text-muted">Esperando registros del ESP32...</span>
+        </div>
+        <div id="log-container" class="log-console">
+            <!-- Los logs aparecerán aquí al recibir datos -->
+        </div>
+    </section>
+</div>
+
+<div id="alerta-modal" class="alerta-overlay" hidden>
+    <div class="alerta-box" role="alertdialog" aria-modal="true">
+        <p id="alerta-titulo" class="alerta-titulo"></p>
+        <p id="alerta-dato" class="alerta-dato"></p>
+        <p id="alerta-mensaje" class="alerta-mensaje"></p>
+        <button id="alerta-cerrar" class="btn btn-alerta" type="button">Entendido</button>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
